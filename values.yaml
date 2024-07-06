@@ -1,0 +1,113 @@
+nameOverride:
+fullnameOverride:
+namespaceOverride:
+clusterZone: "cluster.local"
+
+renderHelmLabels: true
+
+controller:
+  componentName: "jenkins-controller"
+  image:
+    registry: "docker.io"
+    repository: "jenkins/jenkins"
+    tag: 
+    tagLabel: jdk17
+    pullPolicy: "Always"
+  imagePullSecretName:
+
+  numExecutors: 0
+  admin:
+    username: "admin"
+    password: "GGrr33@@tw00rrkk"
+    createSecret: true
+  resources:
+    requests:
+      cpu: "1000m"
+      memory: "1024Mi"
+    limits:
+      cpu: "1300m"
+      memory: "2048Mi"
+  jenkinsUriPrefix: "/jenkins"
+  usePodSecurityContext: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+  containerSecurityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+  serviceType: ClusterIP
+  clusterIp:
+  servicePort: 8080
+  targetPort: 8080
+  
+  healthProbes: true
+
+  probes:
+    startupProbe:
+      failureThreshold: 12
+      httpGet:
+        path: '{{ default "" .Values.controller.jenkinsUriPrefix }}/login'
+        port: http
+      periodSeconds: 10
+      timeoutSeconds: 5
+
+    livenessProbe:
+      failureThreshold: 5
+      httpGet:
+        path: '{{ default "" .Values.controller.jenkinsUriPrefix }}/login'
+        port: http
+      periodSeconds: 10
+      timeoutSeconds: 5
+  installPlugins:
+    - kubernetes:4248.vfa_9517757b_b_a_
+    - workflow-aggregator:596.v8c21c963d92d
+    - git:5.2.2
+    - configuration-as-code:1810.v9b_c30a_249a_4c
+	- pipeline-graph-view:202.v6da_a_9e590325
+    - blueocean:1.27.8
+    - matrix-auth:3.2.1
+    - docker-workflow:572.v950f58993843
+  installLatestPlugins: true
+
+  agent:
+  enabled: true
+  defaultsProviderTemplate: ""
+  
+  jnlpregistry:
+  image:
+    repository: "jenkins/inbound-agent"
+    tag: "3256.v88a_f6e922152-1"
+  workingDir: "/home/jenkins/agent"
+  
+  imagePullSecretName:
+  componentName: "jenkins-agent"
+  
+  resources:
+    requests:
+      cpu: "512m"
+      memory: "512Mi"
+    limits:
+      cpu: "512m"
+      memory: "512Mi"
+  persistence:
+	enabled: true
+	existingClaim:
+	storageClass: managed-csi-premium
+	annotations: {}
+	labels: {}
+	accessMode: "ReadWriteOnce"
+	size: "20Gi"
+	volumes: []
+    mounts: []
+  rbac:
+    create: true
+    readSecrets: false
+
+  serviceAccount:
+    create: true
+    name:
+    annotations: {}
+    extraLabels: {}
+    imagePullSecretName:
